@@ -11,6 +11,6 @@ module "cassandra-registeration-cloudwatch-logs" {
   source = "./modules/cloudwatch"
   log_roup_name = "cassandra-registeration-cloudwatch-logs" 
   retention_days = 7
-  aws_autoscaling_group = cassandra_cluster.aws_autoscaling_group
+  aws_autoscaling_group = module.cassandra_cluster.aws_autoscaling_group
 }
 

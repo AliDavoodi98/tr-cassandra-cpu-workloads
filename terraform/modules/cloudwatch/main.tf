@@ -15,7 +15,6 @@ resource "aws_cloudwatch_event_rule" "node_creation" {
   })
 }
 
-# New Target for CloudWatch Log Group
 resource "aws_cloudwatch_event_target" "log_target" {
   rule = aws_cloudwatch_event_rule.node_creation.name
   arn  = aws_cloudwatch_log_group.log_roup.arn
