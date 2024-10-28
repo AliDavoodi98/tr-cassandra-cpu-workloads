@@ -45,7 +45,13 @@ resource "aws_cloudwatch_event_target" "log_target" {
 # Permission for EventBridge to Write to CloudWatch Logs
 resource "aws_iam_role_policy_attachment" "eventbridge_log_group_policy" {
   role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEventBridgeFullAccess"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
+}
+
+# Assuming you have a Lambda execution role defined as `lambda_execution_role`
+resource "aws_iam_role_policy_attachment" "lambda_logging_policy" {
+  role       = aws_iam_role.lambda_role.name  # Replace with your Lambda role's name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
 
@@ -107,9 +113,9 @@ resource "aws_lambda_function" "name_tagging_lambda" {
   timeout       = 30
 
   # Inline Lambda code
-  source_code_hash = filebase64sha256("lambda_function_payload.zip")
+  source_code_hash = filebase64sha256("${path.module}/lambda_function_payload.zip")
 
-  filename         = "lambda_function_payload.zip"
+  filename         = "${path.module}/lambda_function_payload.zip"
   environment {
     variables = {
       INSTANCE_NAME_PREFIX = "cassandra-node"
@@ -120,7 +126,7 @@ resource "aws_lambda_function" "name_tagging_lambda" {
 
 
 output "event_rule_arn" {
-  value = aws_cloudwatch_event_rule.node_creation.arn
+  value = aws_cloudwatch_event_rule.instance_launch_rule.arn
 }
 
 output "log_group_arn" {
