@@ -3,4 +3,4 @@ import botocore
 
 def lambda_handler(event, context):
    print(f'boto3 version: {event}')
-   print(f'botocore version: {botocore.__version__}')
+   print(f'botocore version: {event.EC2InstanceId}')
