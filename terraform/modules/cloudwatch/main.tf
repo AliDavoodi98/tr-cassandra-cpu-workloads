@@ -23,7 +23,25 @@ resource "aws_cloudwatch_event_rule" "instance_launch_rule" {
   })
 }
 
-resource "aws_cloudwatch_event_target" "lambda_target" {
+# Revmoing ec2 instance
+resource "aws_cloudwatch_event_rule" "instance_terminate_rule" {
+  name        = "EC2InstanceLaunchRule"
+  description = "Triggers on EC2 instance termination"
+  event_pattern = jsonencode({
+    "source": ["aws.autoscaling"],
+    "detail-type": ["EC2 Instance Terminate Successful"],
+    "detail": {
+      "AutoScalingGroupName": ["${var.aws_autoscaling_group}"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "lambda_target_terminate" {
+  rule      = aws_cloudwatch_event_rule.instance_terminate_rule.name
+  arn       = aws_lambda_function.name_tagging_lambda.arn
+}
+
+resource "aws_cloudwatch_event_target" "lambda_target_launch" {
   rule      = aws_cloudwatch_event_rule.instance_launch_rule.name
   arn       = aws_lambda_function.name_tagging_lambda.arn
 }
