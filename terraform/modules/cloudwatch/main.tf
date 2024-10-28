@@ -25,7 +25,7 @@ resource "aws_cloudwatch_event_rule" "instance_launch_rule" {
 
 # Revmoing ec2 instance
 resource "aws_cloudwatch_event_rule" "instance_terminate_rule" {
-  name        = "EC2InstanceLaunchRule"
+  name        = "EC2InstanceTerminateRule"
   description = "Triggers on EC2 instance termination"
   event_pattern = jsonencode({
     "source": ["aws.autoscaling"],
@@ -52,18 +52,6 @@ resource "aws_lambda_permission" "allow_cloudwatch_to_invoke" {
   function_name = aws_lambda_function.name_tagging_lambda.function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.instance_launch_rule.arn
-}
-
-# New Target for CloudWatch Log Group
-resource "aws_cloudwatch_event_target" "log_target" {
-  rule = aws_cloudwatch_event_rule.instance_launch_rule.name
-  arn  = aws_cloudwatch_log_group.log_roup.arn
-}
-
-# Permission for EventBridge to Write to CloudWatch Logs
-resource "aws_iam_role_policy_attachment" "eventbridge_log_group_policy" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEventBridgeFullAccess"
 }
 
 # Assuming you have a Lambda execution role defined as `lambda_execution_role`
