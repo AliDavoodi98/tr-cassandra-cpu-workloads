@@ -18,7 +18,7 @@ resource "aws_cloudwatch_event_rule" "instance_launch_rule" {
     "source": ["aws.autoscaling"],
     "detail-type": ["EC2 Instance Launch Successful"],
     "detail": {
-      "AutoScalingGroupName": ["${aws_autoscaling_group.main.name}"]
+      "AutoScalingGroupName": ["${var.aws_autoscaling_group}"]
     }
   })
 }
