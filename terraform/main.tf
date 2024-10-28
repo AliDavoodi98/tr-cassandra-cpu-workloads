@@ -9,8 +9,16 @@ module "cassandra_cluster" {
 
 module "cassandra-registeration-cloudwatch-logs" {
   source = "./modules/cloudwatch"
-  log_roup_name = "cassandra-registeration-cloudwatch-logs" 
+  log_roup_name = "/aws/events/cassandra-registeration-cloudwatch-logs" 
   retention_days = 7
   aws_autoscaling_group = module.cassandra_cluster.aws_autoscaling_group
+}
+
+output "event_rule_arn" {
+  value = module.cassandra-registeration-cloudwatch-logs.event_rule_arn
+}
+
+output "log_group_arn" {
+  value = module.cassandra-registeration-cloudwatch-logs.log_group_arn
 }
 
