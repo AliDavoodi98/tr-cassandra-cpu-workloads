@@ -14,7 +14,7 @@ resource "aws_autoscaling_group" "main" {
   name = "aws-autoscaling-group"
   max_size = 5
   min_size = 2
-  desired_capacity = 5
+  desired_capacity = 4
   health_check_grace_period = 300
   health_check_type = "ELB"
   force_delete = true

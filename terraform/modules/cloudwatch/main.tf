@@ -3,70 +3,121 @@ resource "aws_cloudwatch_log_group" "log_roup" {
   retention_in_days = var.retention_days
 }
 
+
 # Step 1a: Create a Log Stream within the CloudWatch Log Group
 resource "aws_cloudwatch_log_stream" "ec2_creation_log_stream" {
   name           = "ec2-creation-log-stream"
   log_group_name = aws_cloudwatch_log_group.log_roup.name
 }
 
-resource "aws_cloudwatch_event_rule" "node_creation" {
-  name = "EC2InstanceLaunchRule"
-  description = "Log the records at the time of Cassandra node creation"
+# Existing EventBridge Rule and Lambda Target
+resource "aws_cloudwatch_event_rule" "instance_launch_rule" {
+  name        = "EC2InstanceLaunchRule"
+  description = "Triggers on EC2 instance launch"
   event_pattern = jsonencode({
-  "source": ["aws.ec2"],
-  "detail-type": ["AWS API Call via CloudTrail"],
-  "detail": {
-    "eventSource": ["ec2.amazonaws.com"],
-    "eventName": ["RunInstances"],
-    "userIdentity": {
-      "invokedBy": ["autoscaling.amazonaws.com"]
+    "source": ["aws.autoscaling"],
+    "detail-type": ["EC2 Instance Launch Successful"],
+    "detail": {
+      "AutoScalingGroupName": ["${aws_autoscaling_group.main.name}"]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "lambda_target" {
+  rule      = aws_cloudwatch_event_rule.instance_launch_rule.name
+  arn       = aws_lambda_function.name_tagging_lambda.arn
+}
+
+resource "aws_lambda_permission" "allow_cloudwatch_to_invoke" {
+  statement_id  = "AllowExecutionFromCloudWatch"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.name_tagging_lambda.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.instance_launch_rule.arn
+}
+
+# New Target for CloudWatch Log Group
+resource "aws_cloudwatch_event_target" "log_target" {
+  rule = aws_cloudwatch_event_rule.instance_launch_rule.name
+  arn  = aws_cloudwatch_log_group.log_roup.arn
+}
+
+# Permission for EventBridge to Write to CloudWatch Logs
+resource "aws_iam_role_policy_attachment" "eventbridge_log_group_policy" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEventBridgeFullAccess"
+}
+
+
+resource "aws_iam_role" "lambda_role" {
+  name = "ec2_instance_naming_lambda_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "lambda_ec2_tagging_policy" {
+  name        = "LambdaEC2TaggingPolicy"
+  description = "Allows tagging EC2 instances"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ec2:CreateTags"
+        ],
+        Resource = "arn:aws:ec2:*:*:instance/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_ec2_tagging_policy.arn
+}
+
+
+
+
+
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
     }
   }
-})
 }
 
-# Step 2: Create an IAM Role for EventBridge to publish to CloudWatch Logs
-# resource "aws_iam_role" "eventbridge_logging_role" {
-#   name = "EventBridgeLoggingRole"
+resource "aws_lambda_function" "name_tagging_lambda" {
+  function_name = "EC2InstanceNameTaggingLambda"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "index.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 30
 
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Principal = {
-#           Service = "events.amazonaws.com"
-#         }
-#         Action = "sts:AssumeRole"
-#       }
-#     ]
-#   })
-# }
+  # Inline Lambda code
+  source_code_hash = filebase64sha256("lambda_function_payload.zip")
 
-# resource "aws_iam_role_policy" "eventbridge_logging_policy" {
-#   name = "EventBridgeLoggingPolicy"
-#   role = aws_iam_role.eventbridge_logging_role.name
-
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = [
-#           "logs:CreateLogStream",
-#           "logs:PutLogEvents"
-#         ]
-#         Resource = aws_cloudwatch_log_group.log_roup.arn
-#       }
-#     ]
-#   })
-# }
-
-resource "aws_cloudwatch_event_target" "log_target" {
-  rule = aws_cloudwatch_event_rule.node_creation.name
-  arn  = aws_cloudwatch_log_group.log_roup.arn
-  target_id = "CloudWatchLogTarget"
+  filename         = "lambda_function_payload.zip"
+  environment {
+    variables = {
+      INSTANCE_NAME_PREFIX = "cassandra-node"
+    }
+  }
 }
+
+
 
 output "event_rule_arn" {
   value = aws_cloudwatch_event_rule.node_creation.arn
