@@ -13,12 +13,16 @@ resource "aws_cloudwatch_event_rule" "node_creation" {
   name = "EC2InstanceLaunchRule"
   description = "Log the records at the time of Cassandra node creation"
   event_pattern = jsonencode({
-    "source": ["aws.autoscaling"],
-    "detail-type": ["EC2 Instance Launch Successful"],
-    "detail": {
-      "AutoScalingGroupName": ["${var.aws_autoscaling_group}"]
+  "source": ["aws.ec2"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventSource": ["ec2.amazonaws.com"],
+    "eventName": ["RunInstances"],
+    "userIdentity": {
+      "invokedBy": ["autoscaling.amazonaws.com"]
     }
-  })
+  }
+})
 }
 
 # Step 2: Create an IAM Role for EventBridge to publish to CloudWatch Logs
@@ -61,6 +65,7 @@ resource "aws_cloudwatch_event_rule" "node_creation" {
 resource "aws_cloudwatch_event_target" "log_target" {
   rule = aws_cloudwatch_event_rule.node_creation.name
   arn  = aws_cloudwatch_log_group.log_roup.arn
+  target_id = "CloudWatchLogTarget"
 }
 
 output "event_rule_arn" {
