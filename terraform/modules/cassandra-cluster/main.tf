@@ -9,6 +9,12 @@ resource "aws_launch_template" "main" {
   instance_type = "m5.large"
 }
 
+resource "aws_security_group" "main" {
+  name = "cassandra-security-group"
+  description = "This Security Group has been enabled to set up Cassandra's access"
+  
+}
+
 resource "aws_autoscaling_group" "main" {
   availability_zones = ["us-east-1a"]
   name = "aws-autoscaling-group"
