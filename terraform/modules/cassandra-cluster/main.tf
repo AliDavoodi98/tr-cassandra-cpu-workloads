@@ -11,7 +11,7 @@ resource "aws_launch_template" "main" {
 
 resource "aws_security_group" "main" {
   name = "cassandra-security-group"
-  description = "This Security Group has been enabled to set up Cassandra's access"
+  description = "Setup Cassandra access"
 
   ingress {
     description = "Allow Cassandra Cluster"
@@ -19,6 +19,14 @@ resource "aws_security_group" "main" {
     to_port = 9042
     protocol = "tcp"
     cidr_blocks = [ "0.0.0.0/0" ]
+  }
+
+  egress {
+    description = "Allow Outbound"
+    from_port = 0
+    to_port = 0
+    protocol    = "-1" 
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
