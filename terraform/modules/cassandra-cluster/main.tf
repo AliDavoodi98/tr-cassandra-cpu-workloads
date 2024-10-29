@@ -7,6 +7,10 @@ resource "aws_launch_template" "main" {
   name_prefix = "cassandra_node"
   image_id = var.ami_id
   instance_type = "m5.large"
+
+  network_interfaces {
+    security_groups = [aws_security_group.main.id]
+  }
 }
 
 resource "aws_security_group" "main" {
@@ -27,6 +31,10 @@ resource "aws_security_group" "main" {
     to_port = 0
     protocol    = "-1" 
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+   tags = {
+    Name = "asg-sg"
   }
 }
 
