@@ -12,7 +12,14 @@ resource "aws_launch_template" "main" {
 resource "aws_security_group" "main" {
   name = "cassandra-security-group"
   description = "This Security Group has been enabled to set up Cassandra's access"
-  
+
+  ingress {
+    description = "Allow Cassandra Cluster"
+    from_port = 9042
+    to_port = 9042
+    protocol = "tcp"
+    cidr_blocks = [ "0.0.0.0/0" ]
+  }
 }
 
 resource "aws_autoscaling_group" "main" {
