@@ -14,6 +14,10 @@ module "cassandra-registeration-cloudwatch-logs" {
   aws_autoscaling_group = module.cassandra_cluster.aws_autoscaling_group
 }
 
+module "ecr" {
+  source = "./modules/ecr"
+}
+
 output "event_rule_arn" {
   value = module.cassandra-registeration-cloudwatch-logs.event_rule_arn
 }
