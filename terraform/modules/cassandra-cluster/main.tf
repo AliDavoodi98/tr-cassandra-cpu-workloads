@@ -8,9 +8,11 @@ resource "aws_launch_template" "main" {
   image_id = var.ami_id
   instance_type = "m5.large"
 
-  network_interfaces {
-    security_groups = [aws_security_group.main.id]
-  }
+  security_group_names = [aws_security_group.main.name]
+
+  # network_interfaces {
+  #   security_groups = [aws_security_group.main.id]
+  # }
 }
 
 resource "aws_security_group" "main" {
