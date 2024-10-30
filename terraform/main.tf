@@ -2,6 +2,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
+module "vpc" {
+  
+}
+
 module "cassandra_cluster" {
   source = "./modules/cassandra-cluster"
   ami_id = "ami-0ebfd941bbafe70c6"
