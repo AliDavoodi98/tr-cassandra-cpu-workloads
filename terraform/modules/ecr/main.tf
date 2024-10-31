@@ -47,7 +47,7 @@ resource "aws_ecs_task_definition" "ansible_task" {
         logDriver = "awslogs"
         options = {
           "awslogs-group"         = "/ecs/ansible-playbook"
-          "awslogs-region"        = var.region
+          "awslogs-region"        = "us-east-1"
           "awslogs-stream-prefix" = "ecs"
         }
       }
@@ -66,7 +66,7 @@ resource "aws_ecs_service" "ansible_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = [var.subnet_id] # Replace with your subnet ID(s)
+    subnets         = ["10.0.1.0/16"] # Replace with your subnet ID(s)
     security_groups = [var.security_group_id] # Replace with your security group ID
     assign_public_ip = true
   }

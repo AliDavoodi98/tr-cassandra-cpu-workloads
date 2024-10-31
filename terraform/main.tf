@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "vpc" {
-  
+  source = "./modules/vpc"
 }
 
 module "cassandra_cluster" {
