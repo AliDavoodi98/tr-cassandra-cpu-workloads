@@ -2,9 +2,9 @@ provider "aws" {
   region = "us-east-1"
 }
 
-module "vpc" {
-  source = "./modules/vpc"
-}
+# module "vpc" {
+#   source = "./modules/vpc"
+# }
 
 module "cassandra_cluster" {
   source = "./modules/cassandra-cluster"
@@ -18,9 +18,9 @@ module "cassandra-registeration-cloudwatch-logs" {
   aws_autoscaling_group = module.cassandra_cluster.aws_autoscaling_group
 }
 
-module "ecr" {
-  source = "./modules/ecr"
-}
+# module "ecr" {
+#   source = "./modules/ecr"
+# }
 
 output "event_rule_arn" {
   value = module.cassandra-registeration-cloudwatch-logs.event_rule_arn
